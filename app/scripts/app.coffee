@@ -1,11 +1,13 @@
 React = window.React = require("react")
 ReactDOM = require("react-dom")
+
 _ = require("lodash")
+ansi_up = require("ansi_up")
+
 Timer = require("./ui/Timer.coffee")
 mountNode = document.getElementById("app")
 
-
-{div, h4, pre, code, span, td, tr, table, tbody} = React.DOM
+{div, h4, pre, code, span, td, tr, th, table, tbody, code, thead} = React.DOM
 
 
 LogLine = React.createClass(
@@ -93,10 +95,23 @@ LogfileShow = React.createClass
                 filter
 
         createLine = (item, ix) ->
+            text_content = item.content
+
+            c = if text_content
+                rex = /\n/g
+                html_content = text_content.replace(rex, "<br>")
+                ansi_up.ansi_to_html(html_content)
+            else
+                "---"
+
+            src_class = item.source
+
+
             tr key: ix,
                 td className: "col-md-3", item.time
-                td className: "col-md-1", item.source
-                td className: "col-md-5", item.content
+                td className: "col-md-1 #{src_class}", item.source
+                td className: "col-md-5",
+                    code dangerouslySetInnerHTML: __html: c
 
         div className: "row",
             h4(null, @props.item)
@@ -104,7 +119,12 @@ LogfileShow = React.createClass
                 span className: "col-md-2",
                     "Filters",
                 @state.sources.map(createFilters)
-            table className: "table-striped table-bordered",
+            table className: "table table-condensed table-bordered",
+                thead null,
+                    tr null,
+                        th null, "Time"
+                        th null, "Source"
+                        th null, "Content"
                 tbody null,
                     @state.data.map(createLine)
 

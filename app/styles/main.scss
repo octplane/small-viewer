@@ -65,6 +65,7 @@ body {
     }
 }
 
+
 /* Responsive: Portrait tablets and up */
 @media screen and (min-width: 768px) {
     .container {
@@ -88,4 +89,21 @@ body {
     .jumbotron {
         border-bottom: 0;
     }
+}
+
+
+.stderr {
+@extend kbd;
+color: red;
+}
+
+.stdout {
+@extend code;
+color: black;
+}
+
+.Log.System {
+@extend code;
+font-size: 80%;
+color: blue;
 }
