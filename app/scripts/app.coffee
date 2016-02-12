@@ -1,10 +1,11 @@
 React = window.React = require("react")
 ReactDOM = require("react-dom")
+_ = require("lodash")
 Timer = require("./ui/Timer.coffee")
 mountNode = document.getElementById("app")
 
 
-{div, h4, pre, code, span} = React.DOM
+{div, h4, pre, code, span, td, tr, table, tbody} = React.DOM
 
 
 LogLine = React.createClass(
@@ -54,11 +55,15 @@ LogfileList = React.createClass(
         @props.items.map(createItem)
 )
 
+PREFERED_FIELDS_ORDER = ['time', 'source', 'content']
+
 LogfileShow = React.createClass
     displayName: "LogfileShow"
     getInitialState: ->
         content: "-- select a file --"
         sources: []
+        fields: []
+        data: []
 
     componentWillReceiveProps: (nextProps, nextContent) ->
         this.serverRequest = $.get "api/1/files" +  nextProps.item, (result) =>
@@ -66,34 +71,42 @@ LogfileShow = React.createClass
             json = "[" + result.replace(rex, ",\n") + "{}]"
             parsed_result = $.parseJSON(json)
             sources = []
-            parsed_result.forEach (it) ->
+            fields = []
+
+            _.each parsed_result, (it, ix) ->
+                _.forEach Object.keys(it), (field) ->
+                    fields.push(field) if !fields.includes(field)
                 sources.push(it.source) if !sources.includes(it.source) && it.source
 
             this.setState
-                content: result
-                sources: sources
-            console.log sources
+                sources: _.sortBy(sources)
+                fields: _.sortBy(fields)
+                data: parsed_result
 
     componentWillUnmount: ->
         this.serverRequest.abort()
 
 
     render: ->
-        createFilters = (filter) ->
-            React.createElement "div",
-                className: "col-md-3",
-                key: filter,
+        createFilters = (filter, ix) ->
+            div className: "col-md-3", key: ix,
                 filter
 
+        createLine = (item, ix) ->
+            tr key: ix,
+                td className: "col-md-3", item.time
+                td className: "col-md-1", item.source
+                td className: "col-md-5", item.content
+
         div className: "row",
-            h4(null, @props.item),
+            h4(null, @props.item)
             div className: "filter row",
                 span className: "col-md-2",
                     "Filters",
-                @state.sources.map(createFilters),
-            div className: "row",
-                pre null,
-                    code null, @state.content
+                @state.sources.map(createFilters)
+            table className: "table-striped table-bordered",
+                tbody null,
+                    @state.data.map(createLine)
 
 
 LogList = React.createClass(
